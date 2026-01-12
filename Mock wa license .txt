@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mock WA Driver's License Generator</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0078D7" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    padding: 0;
+    background: #f5f5f5;
+  }
+  h1 {
+    text-align: center;
+  }
+  form {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    max-width: 400px;
+    margin: 0 auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin: 12px 0 6px;
+  }
+  input[type="text"], input[type="date"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
+    background: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  #result {
+    margin-top: 20px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    color: #0078D7;
+  }
+</style>
+</head>
+<body>
+
+<h1>Mock WA Driver's License Generator</h1>
+<form id="licenseForm">
+  <label for="name">Full Name (First Last):</label>
+  <input type="text" id="name" required />
+
+  <label for="dob">Date of Birth:</label>
+  <input type="date" id="dob" required />
+
+  <label for="address">Full Address (including ZIP):</label>
+  <input type="text" id="address" required />
+
+  <label for="height">Height (e.g., 5ft10in or 178cm):</label>
+  <input type="text" id="height" required />
+
+  <label for="eyeColor">Eye Color (e.g., BLU, GRN, BRO):</label>
+  <input type="text" id="eyeColor" maxlength="3" required />
+
+  <button type="submit">Generate License Number</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+// Normalize string: remove non-alphanumeric and uppercase
+function normalizeString(s) {
+  return s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+// SHA-256 hash function using SubtleCrypto API
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.toUpperCase();
+}
+
+document.getElementById('licenseForm').addEventListener('submit', async function(event) {
+  event.preventDefault();
+
+  const name = normalizeString(document.getElementById('name').value);
+  const dob = document.getElementById('dob').value.replace(/-/g, '');
+  const address = normalizeString(document.getElementById('address').value);
+  const height = normalizeString(document.getElementById('height').value);
+  const eyeColor = normalizeString(document.getElementById('eyeColor').value);
+
+  const baseStr = name + dob + address + height + eyeColor;
+
+  try {
+    const hash = await sha256(baseStr);
+    const licenseNumber = hash.slice(0, 12);
+    document.getElementById('result').textContent = `Generated mock WA driver's license number: ${licenseNumber}`;
+  } catch (err) {
+    document.getElementById('result').textContent = 'Error generating license number.';
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(() => console.log('Service Worker Registered'));
+}
+</script>
+
+</body>
+</html>
